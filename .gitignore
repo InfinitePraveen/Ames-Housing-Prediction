@@ -84,6 +84,3 @@ htmlcov/
 *.tar.gz
 *.rar
 *.7z
-
-# Gitignore
-*.gitignore
