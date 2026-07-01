@@ -1,0 +1,58 @@
+# Ames Housing Prediction Configuration
+
+project:
+  name: "Ames Housing Price Prediction"
+  version: "1.0.0"
+  author: "Praveen Kumar"
+  date: "2026-07-01"
+
+data:
+  raw_path: "data/raw/AmesHousing.csv"
+  processed_path: "data/processed/ames_processed.csv"
+  target_column: "SalePrice"
+  random_state: 42
+
+preprocessing:
+  missing_threshold: 0.5  # Drop columns with >50% missing
+  test_size: 0.2
+  validation_size: 0.25
+  scale_features: true
+  handle_outliers: true
+  outlier_method: "iqr"  # or "zscore"
+
+feature_engineering:
+  create_polynomial: false
+  degree: 2
+  create_interactions: false
+  select_top_features: 50
+
+model_tuning:
+  search_method: "random"  # or "grid"
+  cv_folds: 5
+  n_iter: 50
+  scoring: "neg_mean_squared_error"
+  models:
+    - "linear_regression"
+    - "ridge"
+    - "lasso"
+    - "elastic_net"
+    - "decision_tree"
+    - "random_forest"
+    - "xgboost"
+    - "lightgbm"
+    - "catboost"
+    - "svr"
+
+visualization:
+  theme: "darkgrid"
+  figsize: [12, 8]
+  save_plots: true
+
+web_app:
+  host: "0.0.0.0"
+  port: 5000
+  debug: false
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
