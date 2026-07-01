@@ -86,4 +86,4 @@ htmlcov/
 *.7z
 
 # Gitignore
-.gitignore
+*.gitignore
