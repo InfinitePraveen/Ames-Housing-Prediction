@@ -1,20 +1,14 @@
 {
-  "model_name": "XGBoost",
-  "test_rmse": 18450.23,
-  "test_mae": 13200.45,
-  "test_r2": 0.9214,
+  "model_name": "CatBoost",
+  "test_rmse": 21443.970423570863,
+  "test_r2": 0.9426453235465825,
   "train_size": 2344,
   "test_size": 586,
   "n_features": 50,
-  "cv_rmse_mean": 18900.67,
-  "cv_rmse_std": 1200.34,
   "best_params": {
-    "n_estimators": 300,
-    "max_depth": 5,
-    "learning_rate": 0.05,
-    "subsample": 0.8,
-    "colsample_bytree": 0.8
-  },
-  "training_date": "2026-07-01",
-  "model_version": "1.0.0"
+    "depth": 6,
+    "iterations": 300,
+    "l2_leaf_reg": 5,
+    "learning_rate": 0.1
+  }
 }
