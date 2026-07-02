@@ -12,17 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 def load_model(model_path: Union[str, Path]) -> Any:
-    """
-    Load a trained model from disk.
-    
-    Args:
-        model_path: Path to the saved model file
-        
-    Returns:
-        Loaded model object
-    """
+    """Load a trained model from disk."""
     model_path = Path(model_path)
-    
     if not model_path.exists():
         raise FileNotFoundError(f"Model file not found: {model_path}")
     
@@ -35,179 +26,20 @@ def load_model(model_path: Union[str, Path]) -> Any:
         raise
 
 
-def load_scaler(scaler_path: Union[str, Path]) -> Any:
-    """
-    Load a fitted scaler from disk.
+def load_preprocessing_artifacts(artifacts_path: Union[str, Path]) -> Dict:
+    """Load all preprocessing artifacts from a single file."""
+    artifacts_path = Path(artifacts_path)
     
-    Args:
-        scaler_path: Path to the saved scaler file
-        
-    Returns:
-        Loaded scaler object
-    """
-    scaler_path = Path(scaler_path)
-    
-    if not scaler_path.exists():
-        logger.warning(f"Scaler file not found: {scaler_path}")
-        return None
+    if not artifacts_path.exists():
+        raise FileNotFoundError(f"Artifacts file not found: {artifacts_path}")
     
     try:
-        scaler = joblib.load(scaler_path)
-        logger.info(f"Scaler loaded successfully from {scaler_path}")
-        return scaler
+        artifacts = joblib.load(artifacts_path)
+        logger.info(f"Artifacts loaded successfully from {artifacts_path}")
+        return artifacts
     except Exception as e:
-        logger.error(f"Error loading scaler: {e}")
-        return None
-
-
-def load_feature_names(features_path: Union[str, Path]) -> List[str]:
-    """
-    Load selected feature names from disk.
-    
-    Args:
-        features_path: Path to the features JSON file
-        
-    Returns:
-        List of feature names
-    """
-    features_path = Path(features_path)
-    
-    if not features_path.exists():
-        logger.warning(f"Features file not found: {features_path}")
-        return None
-    
-    try:
-        with open(features_path, 'r') as f:
-            features = json.load(f)
-        logger.info(f"Loaded {len(features)} features from {features_path}")
-        return features
-    except Exception as e:
-        logger.error(f"Error loading features: {e}")
-        return None
-
-
-def predict_price(
-    model: Any,
-    features: np.ndarray,
-    scaler: Optional[Any] = None,
-    transform: bool = True
-) -> float:
-    """
-    Make a single price prediction.
-    
-    Args:
-        model: Trained model
-        features: Feature array (1D or 2D)
-        scaler: Optional fitted scaler
-        transform: Whether to scale features before prediction
-        
-    Returns:
-        Predicted price
-    """
-    # Ensure features are 2D
-    if features.ndim == 1:
-        features = features.reshape(1, -1)
-    
-    # Scale features if scaler is provided
-    if scaler and transform:
-        features = scaler.transform(features)
-    
-    # Make prediction
-    try:
-        prediction = model.predict(features)
-        return float(prediction[0])
-    except Exception as e:
-        logger.error(f"Error making prediction: {e}")
+        logger.error(f"Error loading artifacts: {e}")
         raise
-
-
-def batch_predict(
-    model: Any,
-    X: pd.DataFrame,
-    scaler: Optional[Any] = None,
-    feature_names: Optional[List[str]] = None,
-    transform: bool = True
-) -> np.ndarray:
-    """
-    Make batch predictions on multiple samples.
-    
-    Args:
-        model: Trained model
-        X: DataFrame of features
-        scaler: Optional fitted scaler
-        feature_names: List of feature names to use (in order)
-        transform: Whether to scale features before prediction
-        
-    Returns:
-        Array of predictions
-    """
-    # Select and order features
-    if feature_names:
-        missing_features = [f for f in feature_names if f not in X.columns]
-        if missing_features:
-            logger.warning(f"Missing features: {missing_features}")
-        
-        # Use only available features
-        available_features = [f for f in feature_names if f in X.columns]
-        X_selected = X[available_features].copy()
-    else:
-        X_selected = X.copy()
-    
-    # Convert to numpy array
-    features_array = X_selected.values
-    
-    # Scale if scaler is provided
-    if scaler and transform:
-        features_array = scaler.transform(features_array)
-    
-    # Make predictions
-    try:
-        predictions = model.predict(features_array)
-        return predictions
-    except Exception as e:
-        logger.error(f"Error making batch predictions: {e}")
-        raise
-
-
-def predict_with_confidence(
-    model: Any,
-    features: np.ndarray,
-    scaler: Optional[Any] = None,
-    n_iterations: int = 100
-) -> Dict[str, float]:
-    """
-    Make prediction with confidence interval using bootstrapping.
-    
-    Args:
-        model: Trained model
-        features: Feature array
-        scaler: Optional fitted scaler
-        n_iterations: Number of bootstrap iterations
-        
-    Returns:
-        Dictionary with prediction, lower_bound, upper_bound, confidence
-    """
-    # Get base prediction
-    base_prediction = predict_price(model, features, scaler)
-    
-    # Bootstrap for confidence interval
-    predictions = []
-    for _ in range(n_iterations):
-        # Randomly sample with replacement from training data
-        # This is a simplified version - in practice, you'd use the training data
-        pred = base_prediction * (1 + np.random.normal(0, 0.05))
-        predictions.append(pred)
-    
-    predictions = np.array(predictions)
-    
-    return {
-        'prediction': base_prediction,
-        'lower_bound': np.percentile(predictions, 2.5),
-        'upper_bound': np.percentile(predictions, 97.5),
-        'confidence': 0.95,
-        'std': predictions.std(),
-        'n_iterations': n_iterations
-    }
 
 
 class HousingPricePredictor:
@@ -217,7 +49,8 @@ class HousingPricePredictor:
         self,
         model_path: Union[str, Path],
         scaler_path: Optional[Union[str, Path]] = None,
-        features_path: Optional[Union[str, Path]] = None
+        features_path: Optional[Union[str, Path]] = None,
+        artifacts_path: Optional[Union[str, Path]] = None
     ):
         """
         Initialize the predictor with model and artifacts.
@@ -226,10 +59,12 @@ class HousingPricePredictor:
             model_path: Path to the saved model
             scaler_path: Path to the saved scaler (optional)
             features_path: Path to the features JSON file (optional)
+            artifacts_path: Path to combined artifacts file (preferred)
         """
         self.model_path = Path(model_path)
         self.scaler_path = Path(scaler_path) if scaler_path else None
         self.features_path = Path(features_path) if features_path else None
+        self.artifacts_path = Path(artifacts_path) if artifacts_path else None
         
         self.model = None
         self.scaler = None
@@ -240,23 +75,44 @@ class HousingPricePredictor:
     
     def load_artifacts(self) -> None:
         """Load all required artifacts."""
+        # Try loading combined artifacts first
+        if self.artifacts_path and self.artifacts_path.exists():
+            try:
+                artifacts = load_preprocessing_artifacts(self.artifacts_path)
+                self.model = artifacts.get('model')
+                self.scaler = artifacts.get('scaler')
+                self.feature_names = artifacts.get('feature_names', [])
+                logger.info("All artifacts loaded from combined file")
+                return
+            except Exception as e:
+                logger.warning(f"Could not load combined artifacts: {e}")
+        
+        # Load model separately
         self.model = load_model(self.model_path)
         
+        # Load scaler
         if self.scaler_path:
-            self.scaler = load_scaler(self.scaler_path)
+            self.scaler = joblib.load(self.scaler_path)
+            logger.info(f"Scaler loaded from {self.scaler_path}")
         else:
             # Try default location
             default_scaler = Path(__file__).parent.parent.parent / 'models' / 'scaler.pkl'
             if default_scaler.exists():
-                self.scaler = load_scaler(default_scaler)
+                self.scaler = joblib.load(default_scaler)
+                logger.info(f"Scaler loaded from default location")
         
+        # Load features
         if self.features_path:
-            self.feature_names = load_feature_names(self.features_path)
+            with open(self.features_path, 'r') as f:
+                self.feature_names = json.load(f)
+            logger.info(f"Features loaded from {self.features_path}")
         else:
             # Try default location
             default_features = Path(__file__).parent.parent.parent / 'models' / 'selected_features.json'
             if default_features.exists():
-                self.feature_names = load_feature_names(default_features)
+                with open(default_features, 'r') as f:
+                    self.feature_names = json.load(f)
+                logger.info("Features loaded from default location")
     
     def prepare_features(self, data: Dict[str, Any]) -> np.ndarray:
         """
@@ -316,59 +172,36 @@ class HousingPricePredictor:
         """
         features = self.prepare_features(data)
         
-        if with_confidence:
-            return predict_with_confidence(self.model, features, self.scaler)
-        else:
-            return predict_price(self.model, features, self.scaler)
-    
-    def predict_batch(
-        self,
-        data: Union[pd.DataFrame, List[Dict[str, Any]]],
-        with_confidence: bool = False
-    ) -> Union[np.ndarray, List[Dict[str, Any]]]:
-        """
-        Make predictions on multiple inputs.
-        
-        Args:
-            data: DataFrame or list of dictionaries
-            with_confidence: Whether to return confidence intervals
-            
-        Returns:
-            Array of predictions or list of dicts with predictions
-        """
-        if isinstance(data, list):
-            df = pd.DataFrame(data)
-        else:
-            df = data.copy()
-        
-        # Prepare features
-        features = self.prepare_features(df)
-        
         # Scale features
         if self.scaler:
-            features = self.scaler.transform(features)
+            features = self.scaler.transform(features.reshape(1, -1))
         
-        # Make predictions
-        predictions = self.model.predict(features)
+        # Make prediction
+        prediction = float(self.model.predict(features)[0])
         
         if with_confidence:
-            results = []
-            for i, pred in enumerate(predictions):
-                results.append({
-                    'prediction': float(pred),
-                    'confidence': 0.95
-                })
-            return results
+            # Simple confidence estimation based on model type
+            if hasattr(self.model, 'estimators_'):
+                # For ensemble models, use std of predictions
+                if hasattr(self.model, 'estimators_'):
+                    predictions = [est.predict(features)[0] for est in self.model.estimators_]
+                    std = np.std(predictions)
+                    return {
+                        'prediction': prediction,
+                        'lower_bound': prediction - 1.96 * std,
+                        'upper_bound': prediction + 1.96 * std,
+                        'confidence': 0.95,
+                        'std': std
+                    }
         
-        return predictions
+        return prediction
 
 
 # Convenience function for quick predictions
 def quick_predict(
     data: Dict[str, Any],
     model_path: Optional[Union[str, Path]] = None,
-    scaler_path: Optional[Union[str, Path]] = None,
-    features_path: Optional[Union[str, Path]] = None,
+    artifacts_path: Optional[Union[str, Path]] = None,
     with_confidence: bool = False
 ) -> Union[float, Dict[str, Any]]:
     """
@@ -377,8 +210,7 @@ def quick_predict(
     Args:
         data: Dictionary of feature values
         model_path: Path to model file (uses default if None)
-        scaler_path: Path to scaler file (optional)
-        features_path: Path to features file (optional)
+        artifacts_path: Path to artifacts file (optional)
         with_confidence: Whether to return confidence interval
         
     Returns:
@@ -387,7 +219,10 @@ def quick_predict(
     if model_path is None:
         model_path = Path(__file__).parent.parent.parent / 'models' / 'best_model.pkl'
     
-    predictor = HousingPricePredictor(model_path, scaler_path, features_path)
+    if artifacts_path is None:
+        artifacts_path = Path(__file__).parent.parent.parent / 'models' / 'training_data.pkl'
+    
+    predictor = HousingPricePredictor(model_path, artifacts_path=artifacts_path)
     return predictor.predict(data, with_confidence)
 
 
@@ -411,19 +246,19 @@ if __name__ == "__main__":
         'Sale Condition': 'Normal'
     }
     
+    print("Example prediction:")
+    print(f"Input: {sample_data}")
+    
+    # Try to load and predict
     try:
-        # Create predictor
-        predictor = HousingPricePredictor(
-            model_path='../../models/best_model.pkl',
-            scaler_path='../../models/scaler.pkl',
-            features_path='../../models/selected_features.json'
-        )
+        model_path = '../../models/best_model.pkl'
+        artifacts_path = '../../models/training_data.pkl'
         
-        # Make prediction
+        predictor = HousingPricePredictor(model_path, artifacts_path=artifacts_path)
         prediction = predictor.predict(sample_data, with_confidence=True)
-        print(f"Prediction: ${prediction['prediction']:,.2f}")
-        print(f"95% CI: ${prediction['lower_bound']:,.2f} - ${prediction['upper_bound']:,.2f}")
-        
+        print(f"\nPrediction: ${prediction['prediction']:,.2f}")
+        if isinstance(prediction, dict):
+            print(f"95% CI: ${prediction['lower_bound']:,.2f} - ${prediction['upper_bound']:,.2f}")
     except FileNotFoundError as e:
-        print(f"Model artifacts not found: {e}")
-        print("Please train the model first using the notebooks.")
+        print(f"\n⚠️  Model artifacts not found: {e}")
+        print("Please run notebooks/01_EDA_and_Data_Cleaning.ipynb first to generate the artifacts.")
