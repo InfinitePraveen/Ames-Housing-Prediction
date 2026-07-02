@@ -21,99 +21,118 @@
                         </p>
                         
                         <form id="prediction-form">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="overall_qual" class="form-label">Overall Quality (1-10)</label>
-                                    <input type="number" class="form-control" id="overall_qual" 
-                                           min="1" max="10" value="6" required>
+                            <div class="mb-4 text-center">
+                                <p class="text-muted mb-1">Only the most important property details are required.</p>
+                                <p class="small">Advanced model inputs are auto-filled behind the scenes for accurate predictions.</p>
+                            </div>
+
+                            <div class="row gx-3 gy-3 mb-3">
+                                <div class="col-md-6">
+                                    <label for="overall_qual" class="form-label">Overall Quality</label>
+                                    <input type="range" class="form-range" id="overall_qual" min="1" max="10" value="6">
+                                    <div class="d-flex justify-content-between"><span>1</span><span>10</span></div>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="gr_liv_area" class="form-label">Above Ground Living Area (sq ft)</label>
-                                    <input type="number" class="form-control" id="gr_liv_area" 
-                                           min="300" max="5000" value="1500" required>
+                                <div class="col-md-6">
+                                    <label for="overall_cond" class="form-label">Overall Condition</label>
+                                    <input type="range" class="form-range" id="overall_cond" min="1" max="10" value="5">
+                                    <div class="d-flex justify-content-between"><span>1</span><span>10</span></div>
                                 </div>
                             </div>
-                            
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="year_built" class="form-label">Year Built</label>
-                                    <input type="number" class="form-control" id="year_built" 
-                                           min="1870" max="2026" value="2000" required>
+
+                            <div class="row gx-3 gy-3 mb-3">
+                                <div class="col-md-6">
+                                    <label for="gr_liv_area" class="form-label">Living Area (sq ft)</label>
+                                    <input type="number" class="form-control" id="gr_liv_area" min="300" max="5000" value="1500" required>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="total_bsmt_sf" class="form-label">Total Basement Area (sq ft)</label>
-                                    <input type="number" class="form-control" id="total_bsmt_sf" 
-                                           min="0" max="5000" value="1000" required>
-                                </div>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="garage_area" class="form-label">Garage Area (sq ft)</label>
-                                    <input type="number" class="form-control" id="garage_area" 
-                                           min="0" max="2000" value="400" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="bedrooms" class="form-label">Number of Bedrooms</label>
-                                    <input type="number" class="form-control" id="bedrooms" 
-                                           min="0" max="10" value="3" required>
-                                </div>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="full_bath" class="form-label">Full Bathrooms</label>
-                                    <input type="number" class="form-control" id="full_bath" 
-                                           min="0" max="5" value="2" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="half_bath" class="form-label">Half Bathrooms</label>
-                                    <input type="number" class="form-control" id="half_bath" 
-                                           min="0" max="3" value="1" required>
-                                </div>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="lot_area" class="form-label">Lot Area (sq ft)</label>
-                                    <input type="number" class="form-control" id="lot_area" 
-                                           min="1000" max="100000" value="10000" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-6">
                                     <label for="tot_rms" class="form-label">Total Rooms Above Ground</label>
-                                    <input type="number" class="form-control" id="tot_rms" 
-                                           min="1" max="20" value="6" required>
+                                    <input type="number" class="form-control" id="tot_rms" min="2" max="20" value="6" required>
                                 </div>
                             </div>
-                            
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
+
+                            <div class="row gx-3 gy-3 mb-3">
+                                <div class="col-md-6">
+                                    <label for="full_bath" class="form-label">Full Bathrooms</label>
+                                    <input type="number" class="form-control" id="full_bath" min="0" max="5" value="2" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="total_bsmt_sf" class="form-label">Basement Area (sq ft)</label>
+                                    <input type="number" class="form-control" id="total_bsmt_sf" min="0" max="5000" value="1000" required>
+                                </div>
+                            </div>
+
+                            <div class="row gx-3 gy-3 mb-3">
+                                <div class="col-md-6">
+                                    <label for="fireplaces" class="form-label">Fireplaces</label>
+                                    <input type="number" class="form-control" id="fireplaces" min="0" max="5" value="0">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="garage_area" class="form-label">Garage Area (sq ft)</label>
+                                    <input type="number" class="form-control" id="garage_area" min="0" max="2000" value="480" required>
+                                </div>
+                            </div>
+
+                            <div class="row gx-3 gy-3 mb-3">
+                                <div class="col-md-6">
+                                    <label for="garage_area" class="form-label">Garage Area (sq ft)</label>
+                                    <input type="number" class="form-control" id="garage_area" min="0" max="2000" value="480" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="lot_area" class="form-label">Lot Area (sq ft)</label>
+                                    <input type="number" class="form-control" id="lot_area" min="1000" max="150000" value="9436" required>
+                                </div>
+                            </div>
+
+                            <div class="row gx-3 gy-3 mb-3">
+                                <div class="col-md-4">
+                                    <label for="bedrooms" class="form-label">Bedrooms</label>
+                                    <input type="number" class="form-control" id="bedrooms" min="0" max="10" value="3" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="year_built" class="form-label">Year Built</label>
+                                    <input type="number" class="form-control" id="year_built" min="1870" max="2010" value="1973" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="year_remod" class="form-label">Year Remodeled</label>
+                                    <input type="number" class="form-control" id="year_remod" min="1950" max="2010" value="1993" required>
+                                </div>
+                            </div>
+
+                            <div class="row gx-3 gy-3 mb-3">
+                                <div class="col-md-6">
+                                    <label for="year_sold" class="form-label">Year Sold</label>
+                                    <input type="number" class="form-control" id="year_sold" min="2006" max="2010" value="2010" required>
+                                </div>
+                            </div>
+
+                            <div class="row gx-3 gy-3 mb-4">
+                                <div class="col-md-6">
                                     <label for="neighborhood" class="form-label">Neighborhood</label>
-                                    <select class="form-select" id="neighborhood">
+                                    <select class="form-select" id="neighborhood" required>
                                         <option value="NAmes">NAmes</option>
                                         <option value="Gilbert">Gilbert</option>
-                                        <option value="StoneBr">StoneBr</option>
-                                        <option value="Somerst">Somerst</option>
-                                        <option value="NridgHt">NridgHt</option>
                                         <option value="NoRidge">NoRidge</option>
+                                        <option value="NridgHt">NridgHt</option>
                                         <option value="OldTown">OldTown</option>
-                                        <option value="Sawyer">Sawyer</option>
+                                        <option value="Somerst">Somerst</option>
+                                        <option value="StoneBr">StoneBr</option>
                                         <option value="SawyerW">SawyerW</option>
                                         <option value="Crawfor">Crawfor</option>
+                                        <option value="BrkSide">BrkSide</option>
                                     </select>
                                 </div>
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-6">
                                     <label for="sale_condition" class="form-label">Sale Condition</label>
-                                    <select class="form-select" id="sale_condition">
+                                    <select class="form-select" id="sale_condition" required>
                                         <option value="Normal">Normal</option>
-                                        <option value="Abnorml">Abnorml</option>
-                                        <option value="Family">Family</option>
                                         <option value="Partial">Partial</option>
+                                        <option value="Family">Family</option>
+                                        <option value="Abnorml">Abnorml</option>
                                         <option value="New">New</option>
                                     </select>
                                 </div>
                             </div>
-                            
+
                             <div class="d-grid gap-2">
                                 <button type="submit" class="btn btn-primary btn-lg" id="predict-btn">
                                     🔮 Predict Price

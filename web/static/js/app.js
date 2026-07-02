@@ -47,15 +47,18 @@ document.addEventListener('DOMContentLoaded', function() {
             // Collect form data
             const formData = {
                 'Overall Qual': parseInt(document.getElementById('overall_qual').value),
+                'Overall Cond': parseInt(document.getElementById('overall_cond').value),
                 'Gr Liv Area': parseInt(document.getElementById('gr_liv_area').value),
                 'Year Built': parseInt(document.getElementById('year_built').value),
-                'Total Bsmt SF': parseInt(document.getElementById('total_bsmt_sf').value),
-                'Garage Area': parseInt(document.getElementById('garage_area').value),
+                'Year Remod/Add': parseInt(document.getElementById('year_remod').value),
+                'Yr Sold': parseInt(document.getElementById('year_sold').value),
                 'Bedroom AbvGr': parseInt(document.getElementById('bedrooms').value),
+                'Total Bsmt SF': parseInt(document.getElementById('total_bsmt_sf').value),
+                'Fireplaces': parseInt(document.getElementById('fireplaces').value),
+                'Garage Area': parseInt(document.getElementById('garage_area').value),
                 'Full Bath': parseInt(document.getElementById('full_bath').value),
-                'Half Bath': parseInt(document.getElementById('half_bath').value),
-                'Lot Area': parseInt(document.getElementById('lot_area').value),
                 'TotRms AbvGrd': parseInt(document.getElementById('tot_rms').value),
+                'Lot Area': parseInt(document.getElementById('lot_area').value),
                 'Neighborhood': document.getElementById('neighborhood').value,
                 'Sale Condition': document.getElementById('sale_condition').value
             };

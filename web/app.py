@@ -13,7 +13,7 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.data.preprocess import create_features, encode_categorical
+from src.data.preprocess import create_features, encode_categorical_with_encoders
 from src.models.predict import load_model
 
 app = Flask(__name__)
@@ -23,14 +23,59 @@ CORS(app)
 MODEL_PATH = Path(__file__).parent.parent / 'models' / 'best_model.pkl'
 SCALER_PATH = Path(__file__).parent.parent / 'models' / 'scaler.pkl'
 FEATURES_PATH = Path(__file__).parent.parent / 'models' / 'selected_features.json'
+ENCODERS_PATH = Path(__file__).parent.parent / 'models' / 'label_encoders.pkl'
 
 model = None
 scaler = None
 selected_features = None
+label_encoders = None
+
+DEFAULT_PREDICTION_INPUTS = {
+    'Yr Sold': 2010,
+    'Year Remod/Add': 1993,
+    'Overall Cond': 5,
+    'MS SubClass': 50,
+    'Lot Frontage': 68.0,
+    'Lot Area': 9436.5,
+    'Exterior 1st': 'VinylSd',
+    'Exterior 2nd': 'VinylSd',
+    'Mas Vnr Area': 0,
+    'Exter Qual': 'TA',
+    'Foundation': 'PConc',
+    'Bsmt Qual': 'TA',
+    'BsmtFin Type 1': 'Unf',
+    'BsmtFin SF 1': 0,
+    'Heating QC': 'TA',
+    '1st Flr SF': 1084,
+    '2nd Flr SF': 0,
+    'Kitchen Qual': 'TA',
+    'Fireplaces': 0,
+    'Fireplace Qu': 'TA',
+    'Garage Type': 'Attchd',
+    'Garage Yr Blt': 1978,
+    'Garage Finish': 'Unf',
+    'Garage Cars': 2,
+    'Open Porch SF': 27,
+    'Bsmt Full Bath': 0,
+    'Bsmt Half Bath': 0,
+    'Full Bath': 2,
+    'Half Bath': 0,
+    'Bedroom AbvGr': 3,
+    'Wood Deck SF': 0,
+    'Enclosed Porch': 0,
+    '3Ssn Porch': 0,
+    'Screen Porch': 0,
+    'Pool Area': 0,
+    'Sale Condition': 'Normal',
+    'Neighborhood': 'NAmes',
+    'Year Built': 1973,
+    'Year Remod/Add': 1993,
+    'Yr Sold': 2010
+}
 
 def load_artifacts():
     """Load model and preprocessing artifacts."""
-    global model, scaler, selected_features
+    global model, scaler, selected_features, label_encoders
     
     try:
         model = load_model(MODEL_PATH)
@@ -54,6 +99,13 @@ def load_artifacts():
     except Exception as e:
         print(f'Error loading features: {e}')
         selected_features = None
+
+    try:
+        label_encoders = joblib.load(ENCODERS_PATH)
+        print(f'Loaded {len(label_encoders)} label encoders')
+    except Exception as e:
+        print(f'Error loading label encoders: {e}')
+        label_encoders = None
     
     return True
 
@@ -68,22 +120,34 @@ def preprocess_input(data):
     Returns:
         Preprocessed feature array
     """
-    # Convert to DataFrame
-    df = pd.DataFrame([data])
+    # Merge defaults with provided inputs so recruiter-friendly forms can stay compact
+    merged_data = DEFAULT_PREDICTION_INPUTS.copy()
+    merged_data.update(data)
+    df = pd.DataFrame([merged_data])
     
     # Create features
     df = create_features(df)
     
     # Encode categorical
-    df_encoded, _ = encode_categorical(df)
+    if label_encoders is not None:
+        df_encoded = encode_categorical_with_encoders(df, label_encoders)
+    else:
+        from src.data.preprocess import encode_categorical
+        df_encoded, _ = encode_categorical(df)
     
     # Select features
     if selected_features:
-        # Ensure all selected features exist
         available_features = [f for f in selected_features if f in df_encoded.columns]
         df_selected = df_encoded[available_features]
     else:
         df_selected = df_encoded
+    
+    # Ensure all selected features exist and fill missing values
+    for feature in selected_features or []:
+        if feature not in df_selected.columns:
+            df_selected[feature] = 0
+    if selected_features:
+        df_selected = df_selected[selected_features]
     
     # Scale features
     if scaler:
@@ -111,7 +175,20 @@ def predict():
             return jsonify({'error': 'No data provided'}), 400
         
         # Validate required fields
-        required_fields = ['Overall Qual', 'Gr Liv Area', 'Year Built', 'Total Bsmt SF', 'Garage Area']
+        required_fields = [
+            'Overall Qual',
+            'Overall Cond',
+            'Gr Liv Area',
+            'Year Built',
+            'Year Remod/Add',
+            'Yr Sold',
+            'Total Bsmt SF',
+            'Garage Area',
+            'TotRms AbvGrd',
+            'Full Bath',
+            'Neighborhood',
+            'Sale Condition'
+        ]
         missing_fields = [f for f in required_fields if f not in data]
         if missing_fields:
             return jsonify({'error': f'Missing fields: {missing_fields}'}), 400

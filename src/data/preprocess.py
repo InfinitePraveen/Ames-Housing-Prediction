@@ -11,7 +11,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
-def create_features(df):
+def create_features(df, neighborhood_price=None):
     """Create new features from existing data."""
     df_new = df.copy()
     
@@ -44,11 +44,16 @@ def create_features(df):
     df_new['Has_Pool'] = (df_new['Pool Area'] > 0).astype(int)
     df_new['Has_Fireplace'] = (df_new['Fireplaces'] > 0).astype(int)
     
-    # 5. Garage features
+    # 5. Fireplace features
+    if 'Fireplaces' not in df_new.columns:
+        df_new['Fireplaces'] = 0
+    df_new['Has_Fireplace'] = (df_new['Fireplaces'] > 0).astype(int)
+
+    # 6. Garage features
     df_new['Has_Garage'] = (df_new['Garage Area'] > 0).astype(int)
     df_new['Garage_Cars_Per_Area'] = df_new['Garage Cars'] / (df_new['Garage Area'] + 1) * 100
-    
-    # 6. Quality features
+
+    # 7. Quality features
     df_new['Quality_Score'] = df_new['Overall Qual'] * df_new['Overall Cond']
     df_new['Quality_Per_Room'] = df_new['Overall Qual'] / (df_new['TotRms AbvGrd'] + 1)
     
@@ -57,9 +62,20 @@ def create_features(df):
     df_new['Is_Abnormal_Sale'] = (df_new['Sale Condition'].isin(['Abnorml', 'AdjLand', 'Alloca'])).astype(int)
     
     # 8. Neighborhood features
-    neighborhood_price = df_new.groupby('Neighborhood')['SalePrice'].median()
-    df_new['Neighborhood_Price_Level'] = df_new['Neighborhood'].map(neighborhood_price)
-    df_new['Neighborhood_Price_Level_Rank'] = df_new['Neighborhood_Price_Level'].rank(pct=True)
+    if neighborhood_price is None:
+        if 'SalePrice' in df_new.columns:
+            neighborhood_price = df_new.groupby('Neighborhood')['SalePrice'].median()
+        else:
+            neighborhood_price = pd.Series(dtype=np.float64)
+
+    if hasattr(neighborhood_price, 'to_dict'):
+        neighborhood_price = neighborhood_price.to_dict()
+    
+    df_new['Neighborhood_Price_Level'] = df_new['Neighborhood'].map(neighborhood_price).fillna(0.0)
+    if df_new['Neighborhood_Price_Level'].nunique() > 1:
+        df_new['Neighborhood_Price_Level_Rank'] = df_new['Neighborhood_Price_Level'].rank(pct=True)
+    else:
+        df_new['Neighborhood_Price_Level_Rank'] = 0.0
     
     return df_new
 
@@ -77,6 +93,25 @@ def encode_categorical(df, method='label'):
     
     logger.info(f'Encoded {len(categorical_cols)} categorical variables')
     return df_encoded, label_encoders
+
+
+def encode_categorical_with_encoders(df, label_encoders):
+    """Encode categorical variables using saved LabelEncoders."""
+    df_encoded = df.copy()
+    categorical_cols = df_encoded.select_dtypes(include=['object']).columns.tolist()
+    
+    for col in categorical_cols:
+        df_encoded[col] = df_encoded[col].fillna('NA').astype(str)
+        if col in label_encoders:
+            le = label_encoders[col]
+            valid = set(le.classes_)
+            fallback = 'NA' if 'NA' in valid else le.classes_[0]
+            safe_values = [value if value in valid else fallback for value in df_encoded[col].tolist()]
+            df_encoded[col] = le.transform(safe_values)
+        else:
+            df_encoded[col] = pd.factorize(df_encoded[col], sort=True)[0]
+    
+    return df_encoded
 
 
 def preprocess_pipeline(df, test_size=0.2, random_state=42, feature_selection=True):
